@@ -122,14 +122,14 @@ def get_frames(stim, resp, groups):
 ### binary thresholds:
 #	30 - 82% acc
 
-thresholds = [10, 20, 30, 40]
+thresholds = [10, 30]
 
 def preprocessing(stim, resp, fc):
 	groups = group_frames(stim, fc)
 	frames, counts = get_frames(stim, resp, groups)
 	#counts = group_counts(counts)
-	#counts = group_counts_binary_threshold(counts, 30)
-	counts = group_counts_multithreshold(counts, thresholds)
+	counts = group_counts_binary_threshold(counts, 20)
+	#counts = group_counts_multithreshold(counts, thresholds)
 	print("counts shape", counts.shape)
 	return frames, counts
 
@@ -184,21 +184,21 @@ from keras.layers import Dense, Conv2D, MaxPooling2D, Dropout, Flatten, Input, M
 
 def createModel():
     model = Sequential()
-    model.add(Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=input_shape))
-    model.add(Conv2D(32, (3, 3), activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.25))
- 
-    model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
+    model.add(Conv2D(64, (3, 3), padding='same', activation='relu', input_shape=input_shape))
     model.add(Conv2D(64, (3, 3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
  
-    model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
-    model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
+    model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
+    model.add(Conv2D(128, (3, 3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
  
+    model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
+    model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+
     model.add(Flatten())
     # model.add(Dense(512, activation='relu'))
      
@@ -303,6 +303,8 @@ def std_mask(data):
 
 
 
+### problem: after condensing into frames, not enough data to learn from --> reduce feature dimensions
+
 
 # ########## TESTING ##########
 
@@ -339,19 +341,19 @@ data, counts = cnn_preprocessing(stim, resp, fc)
 data = np.reshape(data, [data.shape[0], 16, 16, 1])
 input_shape = data.shape[1:]
 
-model = createModel()
-model2 = lenet_5()
+# model = createModel()
+# model2 = lenet_5()
 
 
-classifier = alexnet_classifier(input_shape)
+# classifier = alexnet_classifier(input_shape)
 
-X_train, X_test, y_train, y_test = train_test_split(data,
-    counts, train_size=0.75, test_size=0.25)
+# X_train, X_test, y_train, y_test = train_test_split(data,
+#     counts, train_size=0.75, test_size=0.25)
 
-classifier.fit(X_train, y_train, epochs=100)
-test_loss, test_acc = model.evaluate(X_test, y_test)
+# classifier.fit(X_train, y_train, epochs=100)
+# test_loss, test_acc = model.evaluate(X_test, y_test)
 
-print('Test accuracy:', test_acc)
+# print('Test accuracy:', test_acc)
 
 
 # batch_size = 100

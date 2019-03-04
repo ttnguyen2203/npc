@@ -23,8 +23,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2
 from sklearn.feature_selection import f_classif
+from sklearn.feature_selection import mutual_info_classif
 
-
+from sklearn.preprocessing import MinMaxScaler
 random.seed(1)
 np.random.seed(1)
 
@@ -70,7 +71,7 @@ model2 = svm.SVC(kernel='poly', C=C, degree=2   , gamma='scale', coef0=1.0)
 
 
 
-
+### TODO: REFACTOR crossValidation 
 
 ### 5-Fold Cross Validation ###
 def crossValidation(C, trainX, trainY):
@@ -107,9 +108,17 @@ stim = timeFirst(mat['stim'])
 stim, resp = removeNan(stim, mat['resp'])
 #stim = np.reshape(stim, [stim.shape[0], 256])
 
+features_selected = [48]    
+#features_selected = [18, 44, 23, 81,  48, 97, 38]
+scaler = MinMaxScaler()
 
 features = extract_features(stim, resp, fc) 
-
+features = np.transpose(features, [1,0])
+features = np.array([features[i] for i in features_selected])
+features = np.transpose(features, [1,0])
+features = scaler.fit_transform(features)
+#features = features / np.max(features)
+print('ft', features.shape)
 
 #stim = max_normalize(stim)
 resp = np.reshape(resp, [stim.shape[0]])
@@ -125,16 +134,13 @@ mask_arr = np.repeat(np.array([mask]), data.shape[0], axis=0)
 
 
 #data -= mask_arr
-print(data[0])
 data -= mean_mask(data)
-print(data[0])
 data /= std_mask(data)
 data = max_normalize(data)
 data = np.reshape(data, [data.shape[0], 256])
 
 
-print(counts)
-
+print(features)
 
 
 X_train, X_test, y_train, y_test = train_test_split(features,
@@ -152,7 +158,7 @@ X_train, X_test, y_train, y_test = train_test_split(features,
 # # model2.fit(training_x, training_y)
 # # print(metrics.accuracy_score(validation_y, model2.predict(validation_x), normalize=True, sample_weight=None))
 
-tpot = TPOTClassifier(generations=5, population_size=50, verbosity=2)
+tpot = TPOTClassifier(generations=5, population_size=100, verbosity=2)
 tpot.fit(X_train, y_train)
 print(tpot.score(X_test, y_test))
 
@@ -161,8 +167,8 @@ print(tpot.score(X_test, y_test))
 ################## UNIVARIATE FEATURE SELECTION #######################
 
 # #apply SelectKBest class to extract top 10 best features
-# bestfeatures = SelectKBest(score_func=f_classif, k=100)
-# fit = bestfeatures.fit(data,counts)
+# bestfeatures = SelectKBest(score_func=f_classif, k='all')
+# fit = bestfeatures.fit(features, counts)
 # dfscores = pd.DataFrame(fit.scores_)
 # dfcolumns = pd.DataFrame([i for i in range(256)])
 # #concat two dataframes for better visualization 
